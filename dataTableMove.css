@@ -1,0 +1,13 @@
+table tr th:nth-child(n){
+    background-color: white;
+    position: fixed;
+    z-index: 15;
+}
+
+table tr td:nth-child(n){
+    background-color: white;
+    vertical-align:middle;
+}
+table tr td:nth-child(1){
+    position: fixed;
+}
