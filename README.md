@@ -16,4 +16,5 @@ html:
 	<div style="position:relative;clear:both;"></div>
 
 js:
+
 	dataTableMove("divId","tableId",width,height,top,left);
