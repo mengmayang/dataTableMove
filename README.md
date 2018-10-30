@@ -21,7 +21,7 @@ html:dataTableMove.html
 		<div id="tableId">
 		</div>
 	</div>
-	<div style="position:relative;clear:both;"></div
+	<div style="position:relative;clear:both;"></div>
 	<script type="text/javascript" src="dataTableMove_v2.js"></script>
 	<script type="text/javascript">
 		colFixedNum=3;
