@@ -3,7 +3,6 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Document</title>
-    <link rel="stylesheet" type="text/css" href="tablecss7.css">
     
 </head>
 <body>
@@ -93,7 +92,7 @@
                     <td>Herrod</td>
                     <td>Chandler</td>
                     <td>Sales Assistant</td>
-                    <td>San Francisco</td>
+                    <td>SanFrancisco</td>
                     <td>59</td>
                     <td>2012/08/06</td>
                     <td>$137,500</td>
@@ -160,9 +159,10 @@
         </table>
     </div>
     <div style="position:relative;clear:both;"></div>
-    <script type="text/javascript" src="dataTableMove.js"></script>
+    <script type="text/javascript" src="dataTableMove_v2.js"></script>
     <script type="text/javascript">
-        dataTableMove("divTable","mytable",500,300,120,70);
+        colFixedNum=3;
+        dataTableMove("divTable","mytable",600,300,120,70,colFixedNum);
     </script>
 </body>
 </html>
