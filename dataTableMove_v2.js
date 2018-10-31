@@ -5,6 +5,7 @@ function dataTableMove(divId,TableId,width,height,top,left,colFixedNum){
     var thCells=divTable.getElementsByTagName("th");
     var colNum=thCells.length;
     var rowNum=myTdCells.length/colNum;
+    var noise=1;//固定单元格和移动单元格之间的top误差
     //修改fixed属性
     for(var i=0;i<colNum;i++){
         thCells[i].style.cssText="background-color: white;position: fixed;z-index: 15;";
@@ -16,16 +17,15 @@ function dataTableMove(divId,TableId,width,height,top,left,colFixedNum){
         for(var p=0;p<colFixedNum;p++){
             var fixedHeight=myTdCells[i*colNum+p].offsetHeight;
             myTdCells[i*colNum+p].style.cssText+="position: fixed;";
-            console.log(myTdCells[i*colNum+p].offsetHeight);
         }
     }
 
 
 
-    dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,width,height,top,left,colFixedNum);
+    dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,width,height,top,left,colFixedNum,noise);
 }
 
-function dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,width,height,top,left,colFixedNum){
+function dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,width,height,top,left,colFixedNum,noise){
 //function dataTableMoveInit(width,height,top,left){
     //css 初始化
     mytable.setAttribute("style","width:100%;z-index: -1;position: relative;border-collapse:collapse;");
@@ -49,7 +49,7 @@ function dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,widt
     var new_width=width_max+15;
     var new_height=Number(currentCellHeight)+5;
     var new_top=currentCellTop-new_height;
-    thCells[0].innerHTML="<div style=\"width:"+new_width+"px;text-align:left\">"+currentCellContent+"</div>";
+    thCells[0].innerHTML="<div style=\"width:"+new_width+"px;height:"+new_height+"px;text-align:left;\">"+currentCellContent+"</div>";
     currentCellLeft=currentCellLeft+thCells[0].offsetWidth;
     thCells[0].style.top=new_top+"px";
     thCells[0].style.left=divTable.offsetLeft+"px";
@@ -59,6 +59,7 @@ function dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,widt
         currentCellContent=thCells[i].innerHTML; 
 
         var width_max=Number(currentCellWidth);
+
 
         for(var j=0;j<rowNum;j++){
             if(myTdCells[j*colNum+i].offsetWidth>width_max){
@@ -74,6 +75,7 @@ function dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,widt
         currentCellLeft=thCells[i].offsetLeft;
         new_left=currentCellLeft-new_width;
         thCells[i].innerHTML="<div style=\"width:"+new_width+"px;height:"+new_height+"px;text-align:left\">"+currentCellContent+"</div>";
+
         thCells[i].style.left=currentCellLeft+"px";
         thCells[i].style.top=new_top+"px";
         currentCellLeft=thCells[i].offsetLeft+thCells[i].offsetWidth;
@@ -88,6 +90,7 @@ function dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,widt
         }
     }
     //单元格高度调整
+    var floatErr=parseFloat(myTdCells[colNum+colFixedNum].getBoundingClientRect().top-myTdCells[colFixedNum].getBoundingClientRect().top-myTdCells[colFixedNum].offsetHeight);
     for(var i=0;i<rowNum;i++){
         var colFixedMaxHeight=myTdCells[i*colNum].offsetHeight;
         for(var j=0;j<colFixedNum;j++){
@@ -96,15 +99,17 @@ function dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,widt
             }
         }
         var moveTd=myTdCells[i*colNum+colFixedNum];
+
         var CellHeightSet;
+
         if(colFixedMaxHeight<moveTd.offsetHeight){
             CellHeightSet=moveTd.offsetHeight;
             for(var j=0;j<colFixedNum;j++){
                 myTdCells[i*colNum+j].children[0].style.height=CellHeightSet+"px";
                 myTdCells[i*colNum+j].children[0].style.cssText +="line-height:"+CellHeightSet+"px";
                 //误差调整
-                var err=myTdCells[i*colNum+j].offsetHeight-moveTd.offsetHeight;
-                myTdCells[i*colNum+j].children[0].style.height=CellHeightSet-err+"px";
+                var err=parseFloat(myTdCells[i*colNum+j].offsetHeight-moveTd.offsetHeight);
+                myTdCells[i*colNum+j].children[0].style.height=parseFloat(CellHeightSet-err+floatErr)+"px";
             }
         }else{
             CellHeightSet=colFixedMaxHeight;
@@ -112,19 +117,30 @@ function dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,widt
                 myTdCells[i*colNum+j].children[0].style.height=CellHeightSet+"px";
                 myTdCells[i*colNum+j].children[0].style.cssText +="line-height:"+CellHeightSet+"px";
                 //误差调整
-                var err=myTdCells[i*colNum+j].offsetHeight-colFixedMaxHeight;
-                myTdCells[i*colNum+j].children[0].style.height=CellHeightSet-err+"px";
+                var err=parseFloat(myTdCells[i*colNum+j].offsetHeight-colFixedMaxHeight);
+                myTdCells[i*colNum+j].children[0].style.height=parseFloat(CellHeightSet-err+floatErr)+"px";
             }
            
         }
     }
     //单元格宽度调整
     for(var i=0;i<colNum;i++){
-        if(thCells[i].offsetWidth<myTdCells[0*colNum+i].offsetWidth){
+        var width_max=thCells[i].offsetWidth;
+        for(var j=0;j<rowNum;j++){
+            if(myTdCells[j*colNum+i].offsetWidth>width_max){
+                width_max=myTdCells[j*colNum+i].offsetWidth;
+            }
+        }
+        if(thCells[i].offsetWidth<=myTdCells[0*colNum+i].offsetWidth){
             thCells[i].children[0].style.width=myTdCells[0*colNum+i].offsetWidth+"px";
+            err=thCells[i].offsetWidth-myTdCells[0*colNum+i].offsetWidth;
+            thCells[i].children[0].style.width=myTdCells[0*colNum+i].offsetWidth-err+"px";
+            
         }else{
             for(var j=0;j<rowNum;j++){
                 myTdCells[j*colNum+i].children[0].style.width=thCells[i].offsetWidth+"px";
+                err=myTdCells[j*colNum+i].offsetWidth-thCells[i].offsetWidth;
+                myTdCells[j*colNum+i].children[0].style.width=thCells[i].offsetWidth-err+"px";
             }
         }
     }
@@ -132,6 +148,7 @@ function dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,widt
     currentCellLeft=thCells[0].offsetLeft+thCells[0].offsetWidth;
     for(var i=1;i<colFixedNum;i++){
         thCells[i].style.left=currentCellLeft+"px";
+        // thCells[i].children[0].style.width=myTdCells[i].offsetWidth+"px";
         currentCellLeft=thCells[i].offsetLeft+thCells[i].offsetWidth;
     }
 
@@ -142,24 +159,40 @@ function dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,widt
     //第一列位置固定
     for(var i=0;i<colFixedNum;i++){
         var myTdCelldiv;
-        var currentCellTop=thCells[i].offsetTop+thCells[i].offsetHeight;
-        var currentCellLeft=thCells[i].offsetLeft-thCells[i].offsetWidth;
+        var currentCellTop=parseFloat(thCells[i].offsetTop+thCells[i].offsetHeight);
+        var currentCellLeft=parseFloat(thCells[i].offsetLeft-thCells[i].offsetWidth);
         for(var j=0;j<rowNum;j++){
             myTdCelldiv=myTdCells[j*colNum+i].children[0];
-            myTdCelldiv.style.width=thCells[i].offsetWidth+"px";
+            myTdCelldiv.style.width=thCells[i].children[0].offsetWidth+"px";
             var cssTop="top:"+currentCellTop+"px";
             // myTdCells[j*colNum+i].setAttribute("style",cssTop);
             myTdCells[j*colNum+i].top=cssTop;
-            currentCellTop=currentCellTop+myTdCells[j*colNum+i].offsetHeight;
+            currentCellTop=parseFloat(currentCellTop+myTdCells[j*colNum+i].offsetHeight);
             myTdCells[j*colNum+i].style.left=thCells[i].offsetLeft+"px";
         }
     }
 
-    
     //除第一列之后的cell位置
-    mytable.style.left=thCells[colFixedNum].offsetLeft-mytable.offsetLeft+"px";
+    mytable.style.left=myTdCells[colFixedNum-1].offsetLeft+myTdCells[colFixedNum-1].offsetWidth-mytable.offsetLeft+"px";
+    // mytable.style.left=thCells[colFixedNum].offsetLeft-mytable.offsetLeft+"px";
     // mytable.style.left=thCells[1].offsetLeft-thCells[1].offsetWidth+"px";
-    mytable.style.top=myTdCells[0].offsetTop-mytable.offsetTop+"px";
+    //误差调整
+    // var err=parseFloat(myTdCells[colNum+colFixedNum].getBoundingClientRect().top-myTdCells[colNum].getBoundingClientRect().top);
+
+    // console.log(parseFloat(myTdCells[2*colNum].getBoundingClientRect().top));
+    // console.log(parseFloat(myTdCells[2*colNum+6].getBoundingClientRect().top));
+    // mytable.style.top="8px";
+    var floatErr=parseFloat(myTdCells[colNum+3].getBoundingClientRect().top-myTdCells[colNum].getBoundingClientRect().top);
+    console.log(floatErr);
+    console.log(myTdCells[colNum].children[0].innerHTML);
+    console.log(myTdCells[colNum+3].children[0].innerHTML);
+
+    for(var i=0;i<rowNum;i++){
+        for(var j=0;j<colFixedNum;j++){
+            myTdCells[i*colNum+j].style.top=parseFloat(myTdCells[i*colNum+j].offsetTop+noise)+"px";
+        }
+    }
+    
     //超出边界的隐藏
     hiddenOverside(thCells,myTdCells,rowNum,colNum,colFixedNum);
     //添加事件监听
@@ -173,7 +206,7 @@ function dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,widt
             scollChange=this.scrollTop-mytableScollTop;
             for(var i=0;i<rowNum;i++){
                 for(var p=0;p<colFixedNum;p++){
-                    myTdCells[i*colNum+p].style.top=myTdCells[i*colNum+colFixedNum].getBoundingClientRect().top+"px";
+                    myTdCells[i*colNum+p].style.top=myTdCells[i*colNum+colFixedNum].getBoundingClientRect().top+noise+"px";
                     if(myTdCells[i*colNum+p].offsetTop<thCells[0].offsetTop){
                         myTdCells[i*colNum+p].style.visibility="hidden";
                         for(var j=0;j<colNum;j++){
