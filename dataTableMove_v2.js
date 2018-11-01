@@ -179,13 +179,7 @@ function dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,widt
     //误差调整
     // var err=parseFloat(myTdCells[colNum+colFixedNum].getBoundingClientRect().top-myTdCells[colNum].getBoundingClientRect().top);
 
-    // console.log(parseFloat(myTdCells[2*colNum].getBoundingClientRect().top));
-    // console.log(parseFloat(myTdCells[2*colNum+6].getBoundingClientRect().top));
-    // mytable.style.top="8px";
     var floatErr=parseFloat(myTdCells[colNum+3].getBoundingClientRect().top-myTdCells[colNum].getBoundingClientRect().top);
-    console.log(floatErr);
-    console.log(myTdCells[colNum].children[0].innerHTML);
-    console.log(myTdCells[colNum+3].children[0].innerHTML);
 
     for(var i=0;i<rowNum;i++){
         for(var j=0;j<colFixedNum;j++){
@@ -196,14 +190,43 @@ function dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,widt
     //超出边界的隐藏
     hiddenOverside(thCells,myTdCells,rowNum,colNum,colFixedNum);
     //添加事件监听
-    var mytableScollTop=this.scrollTop;
-    var mytableScollLeft=this.scrollLeft;
+    divTable.scrollTop=0;
+    divTable.scrollLeft=0;
+    smoothscroll();
+    smoothscrollLeft();
+    var mytableScollTop=divTable.scrollTop;
+    var mytableScollLeft=divTable.scrollLeft;
+    var windowScollTop=document.documentElement.scrollTop;
+    var windowScollLeft=document.documentElement.scrollLeft;
     divTable.addEventListener('scroll',function(){
 
         if(this.scrollTop != mytableScollTop){
             //垂直拉滚动条
             //第一列myCell的top随之改变
             scollChange=this.scrollTop-mytableScollTop;
+            DynamicVerticalHide(divTable,myTdCells,thCells,rowNum,colNum,scollChange,noise);
+            mytableScollTop=this.scrollTop;
+        }
+        if(this.scrollLeft != mytableScollLeft){
+            //水平拉滚动条
+            //left随之改变
+            scollChange=this.scrollLeft-mytableScollLeft;
+            DynamicHorizontalHide(myTdCells,thCells,rowNum,colNum,scollChange,noise)
+            mytableScollLeft=this.scrollLeft;
+        }
+
+    },false);
+
+    window.addEventListener('scroll',function(){
+        if(document.documentElement.scrollTop != mytableScollTop){
+            //垂直拉滚动条
+            //第一列myCell的top随之改变
+            divTable.scrollTop=0;
+            scollChange=document.documentElement.scrollTop-windowScollTop;
+            var refTop=myTdCells[0].getBoundingClientRect().top;
+            for(var i=0;i<colNum;i++){
+                thCells[i].style.top=refTop-thCells[i].offsetHeight-5+"px";
+            }
             for(var i=0;i<rowNum;i++){
                 for(var p=0;p<colFixedNum;p++){
                     myTdCells[i*colNum+p].style.top=myTdCells[i*colNum+colFixedNum].getBoundingClientRect().top+noise+"px";
@@ -212,7 +235,7 @@ function dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,widt
                         for(var j=0;j<colNum;j++){
                             myTdCells[i*colNum+j].style.visibility="hidden";
                         }
-                    }else if(myTdCells[i*colNum+p].offsetTop+myTdCells[i*colNum+p].offsetHeight>divTable.offsetTop+divTable.offsetHeight){
+                    }else if(myTdCells[i*colNum+p].offsetTop+myTdCells[i*colNum+p].offsetHeight>refTop+divTable.offsetHeight){
                         myTdCells[i*colNum].style.visibility="hidden";
                         for(var j=0;j<colNum;j++){
                             myTdCells[i*colNum+j].style.visibility="hidden";
@@ -231,36 +254,86 @@ function dataTableMoveInit(divTable,mytable,myTdCells,thCells,colNum,rowNum,widt
                 }
                 
             }
-
-           
-            mytableScollTop=this.scrollTop;
-
-
-
-
+            windowScollTop=document.documentElement.scrollTop;
         }
-        if(this.scrollLeft != mytableScollLeft){
-            //垂直拉滚动条
-            //第一列myCell的top随之改变
-            scollChange=this.scrollLeft-mytableScollLeft;
-            for(var i=colFixedNum;i<colNum;i++){
-                thCells[i].style.left=myTdCells[i].getBoundingClientRect().left+"px";
-                if(thCells[i].offsetLeft+thCells[i].offsetWidth>divTable.offsetWidth+divTable.offsetLeft){
-                    thCells[i].style.visibility="hidden";
-                }else if(thCells[i].offsetLeft<thCells[colFixedNum-1].offsetLeft+thCells[colFixedNum-1].offsetWidth){
-                    thCells[i].style.visibility="hidden";
-                }else{
-                    thCells[i].style.visibility="visible";
-                }
-                
+
+        if(document.documentElement.scrollLeft != mytableScollLeft){
+            //水平拉滚动条
+            //禁用window的横向滚动
+            if(document.documentElement.scrollLeft>0){
+                divTable.style.position="fixed";
+                smoothscrollLeft();
+                divTable.style.position="static";
+
+            }else{
+                divTable.style.position="static";
             }
+            
 
-            mytableScollLeft=this.scrollLeft;
+
         }
-
     },false);
 }
 
+function DynamicVerticalHide(divTable,myTdCells,thCells,rowNum,colNum,scollChange,noise){
+    var refTop=divTable.offsetTop+divTable.offsetHeight;
+    for(var i=0;i<rowNum;i++){
+        for(var p=0;p<colFixedNum;p++){
+            myTdCells[i*colNum+p].style.top=myTdCells[i*colNum+colFixedNum].getBoundingClientRect().top+noise+"px";
+            if(myTdCells[i*colNum+p].offsetTop<thCells[0].offsetTop){
+                myTdCells[i*colNum+p].style.visibility="hidden";
+                for(var j=0;j<colNum;j++){
+                    myTdCells[i*colNum+j].style.visibility="hidden";
+                }
+            }else if(myTdCells[i*colNum+p].offsetTop+myTdCells[i*colNum+p].offsetHeight+document.documentElement.scrollTop>refTop){
+                myTdCells[i*colNum].style.visibility="hidden";
+                for(var j=0;j<colNum;j++){
+                    myTdCells[i*colNum+j].style.visibility="hidden";
+                }
+            }else if(myTdCells[i*colNum+p].offsetTop>=thCells[0].offsetTop){
+                myTdCells[i*colNum+p].style.visibility="visible";
+                for(var j=0;j<colNum;j++){
+                    myTdCells[i*colNum+j].style.visibility="visible";
+                }
+            }else{
+                myTdCells[i*colNum+p].style.visibility="visible";
+                for(var j=0;j<colNum;j++){
+                    myTdCells[i*colNum+j].style.visibility="visible";
+                }
+            }
+        }
+        
+    }
+}
+
+function DynamicHorizontalHide(myTdCells,thCells,rowNum,colNum,scollChange,noise){
+    for(var i=colFixedNum;i<colNum;i++){
+        thCells[i].style.left=myTdCells[i].getBoundingClientRect().left+"px";
+        if(thCells[i].offsetLeft+thCells[i].offsetWidth>divTable.offsetWidth+divTable.offsetLeft){
+            thCells[i].style.visibility="hidden";
+        }else if(thCells[i].offsetLeft<thCells[colFixedNum-1].offsetLeft+thCells[colFixedNum-1].offsetWidth){
+            thCells[i].style.visibility="hidden";
+        }else{
+            thCells[i].style.visibility="visible";
+        }
+        
+    }
+}
+
+function smoothscroll(){
+    var currentScroll = document.documentElement.scrollTop || document.body.scrollTop;
+    if (currentScroll > 0) {
+         window.requestAnimationFrame(smoothscroll);
+         window.scrollTo (0,currentScroll - (currentScroll/5));
+    }
+};
+function smoothscrollLeft(){
+    var currentScroll = document.documentElement.scrollLeft || document.body.scrollLeft;
+    if (currentScroll > 0) {
+         window.requestAnimationFrame(smoothscrollLeft);
+         window.scrollTo (0,currentScroll - (currentScroll/5));
+    }
+};
 
 function hiddenOverside(thCells,myTdCells,rowNum,colNum,colFixedNum){
     
